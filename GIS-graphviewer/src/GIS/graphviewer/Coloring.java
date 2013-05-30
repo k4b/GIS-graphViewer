@@ -153,11 +153,12 @@ public class Coloring
                         //=============================
 			
 			ArrayList<Integer> wierzch = new ArrayList<Integer>();
+			ArrayList<Integer> wierzchMax = new ArrayList<Integer>();
 			for (int k=0; k<N; k++)
 			{
                             if (koloryWierzcholkow.get(iteracja).get(k)==0) 				//jesli niepokolorowany
                             {
-                                if (maxNasycenie < nasycenieWierzcholkow.get(k))		//TODO wybierz o najwiekszym nasyceniu wierzcholkowym
+                                if (maxNasycenie < nasycenieWierzcholkow.get(k))		//wybierz o najwiekszym nasyceniu wierzcholkowym
                                         maxNasycenie = nasycenieWierzcholkow.get(k);
                             }
 			}
@@ -172,22 +173,22 @@ public class Coloring
 					}
 			}
 			
-//			if (iteracja==0)
-//				System.out.println("dobrze");
-//			else if (nasycenieWierzcholkow.lastIndexOf(maxNasycenie) == stopnieWierzcholkow.lastIndexOf(maxStopien))
-//				System.out.println("dobrze");
-//			else System.out.println("zle");
+			for (int k=0; k<wierzch.size(); k++)
+			{
+				if (stopnieWierzcholkow.get(wierzch.get(k))==maxStopien)
+					wierzchMax.add(wierzch.get(k));
+			}
 			
 			for (int j=0; j<N; j++)
 			{
 				if(stopnieWierzcholkow.get(j)==maxStopien)
                                     degreeNodes += " " + j + ",";
-//				//todo 
-				if ((macierzSasiedztwa.get(stopnieWierzcholkow.lastIndexOf(maxStopien)).get(j)!=0) &&       	//warunek istnienia krawedzi
+
+				if ((macierzSasiedztwa.get(wierzchMax.get(wierzchMax.size()-1)).get(j)!=0) &&       	//warunek istnienia krawedzi
 					(koloryWierzcholkow.get(iteracja).get(j)!=0))			//warunek ze sasiad ma kolor				
 					tablicaKolorow.remove(koloryWierzcholkow.get(iteracja).get(j));	//ten kolor jest niemozliwy - sasiad ma taki
 				if (maxStopien != 0) 
-					koloryWierzcholkow.get(iteracja).set(stopnieWierzcholkow.lastIndexOf(maxStopien), tablicaKolorow.get(1));   //defaultowego koloru nie usuwamy, czyli najnizszy
+					koloryWierzcholkow.get(iteracja).set(wierzchMax.get(wierzchMax.size()-1), tablicaKolorow.get(1));   //defaultowego koloru nie usuwamy, czyli najnizszy
 																													//mozliwy kolor to 2gi argument tablicy
 				//max stopien to 0 - wezel nie ma krawedzi, jesli taki istnieje to pokoloruj wolnym kolorem (1) 
 				if (maxStopien == 0 && koloryWierzcholkow.get(iteracja).contains((int)0)) 
@@ -195,28 +196,22 @@ public class Coloring
 			}
 				for (int z=0; z<N; z++)
                                 { //uzupelnianie nasycenia wierzcholkow
-                                    if (iteracja ==0 && macierzSasiedztwa.get(stopnieWierzcholkow.lastIndexOf(maxStopien)).get(z)>0 && 
-                                                    koloryWierzcholkow.get(iteracja).get(stopnieWierzcholkow.lastIndexOf(maxStopien))>0) 
+                                    if (iteracja ==0 && macierzSasiedztwa.get(wierzchMax.get(wierzchMax.size()-1)).get(z)>0 && 
+                                                    koloryWierzcholkow.get(iteracja).get(wierzchMax.get(wierzchMax.size()-1))>0) 
                                     nasycenieWierzcholkow.set(z, nasycenieWierzcholkow.get(z)+1);
-                                    else if (iteracja > 0 && macierzSasiedztwa.get(stopnieWierzcholkow.lastIndexOf(maxStopien)).get(z)>0 && 
+                                    else if (iteracja > 0 && macierzSasiedztwa.get(wierzchMax.get(wierzchMax.size()-1)).get(z)>0 && 
                                                     (koloryWierzcholkow.get(iteracja).get(z)==0))	 
                                     nasycenieWierzcholkow.set(z, nasycenieWierzcholkow.get(z)+1);
                                 }
 //			}
 			System.out.println("kolory:    " + koloryWierzcholkow.get(koloryWierzcholkow.size()-1));
-                        int next = stopnieWierzcholkow.lastIndexOf(maxStopien);
+                        int next = wierzchMax.get(wierzchMax.size()-1);
                         DSATURInfoItem item = new DSATURInfoItem(iteracja+1, maxNasycenie, saturationNodes, maxStopien, degreeNodes, next);
 			System.out.println(item.toString());
                         infos.add(item);
                         
-//			for (int licz =0; licz<N; licz++) 
-//			{
-//				if (macierzSasiedztwa.get(maxStopien).get(licz).equals(1))
-//					nasycenieWierzcholkow.set(licz, nasycenieWierzcholkow.get(licz)+1);
-//			}
-			stopnieWierzcholkow.set(stopnieWierzcholkow.lastIndexOf(maxStopien),0);	  //wyzeruj stopnie dla pokolorowanego wierzchołka
+			stopnieWierzcholkow.set(wierzchMax.get(wierzchMax.size()-1),0);	  //wyzeruj stopnie dla pokolorowanego wierzchołka
 			iteracja ++;
-//			System.out.println(tablicaKolorow.size());
 		}
                 return infos;
 	}
@@ -309,7 +304,10 @@ public class Coloring
 			}
 			}
 			if (zbiorW.size()>1)
+			{
 			zbiorC.add(stopnieWierzcholkow.lastIndexOf(maxStopien));	//dodaj do zbioru C najwyzszy wierzcholek
+//			zbiorW.remove(stopnieWierzcholkow.lastIndexOf(maxStopien));
+			}
 			else
 				zbiorC.add(zbiorW.get(0));
                                 
@@ -354,11 +352,29 @@ public class Coloring
                                     currentColors.set(node, kolor);
                                 }
                                 myColors.add(new ArrayList<>(currentColors));
-				
+				int wybrany=0;			
+				int maxLicznik=0;
+				int indexWybranego=0;
 				if (zbiorU.size()>0)
-				{		
-					zbiorC.add(zbiorU.get(0));			//dodaje pierwszy wolny do kolorowania
-					zbiorU.remove(0);					// TODO powinien byc z najwieksza liczba polaczen w W\U
+				{	
+					for (int i=0; i<zbiorU.size(); i++)
+					{
+						int licznik=0;
+						for (int j=0; j<zbiorW_U.size(); j++)
+						{
+							if (macierzSasiedztwa.get(zbiorU.get(i)).get(zbiorW_U.get(j)) > 0)
+							licznik++;
+						}
+						if (licznik>maxLicznik)
+						{
+							maxLicznik=licznik;
+							indexWybranego=i;
+						}													
+					}
+					wybrany = zbiorU.get(indexWybranego);
+					zbiorC.add(wybrany);			//dodaje do kolorowania wierzcho�ek z najwieksza liczba polaczen w W\U
+//					zbiorW.remove(new Integer(wybrany));
+					zbiorU.remove(new Integer(wybrany));					
 				        
                                         if(zbiorU.isEmpty()) {
                                             System.out.println();
